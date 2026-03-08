@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BT</title>
+    <style>
+        body { font-family: 'Consolas', monospace; padding: 40px; background: #0a0a0a; color: #00FF41; }
+        .app-card { max-width: 700px; margin: auto; border: 2px solid #00FF41; padding: 25px; box-shadow: 0 0 20px #004411; }
+        h1 { text-align: center; font-size: 3.5em; margin-top: 0; letter-spacing: 12px; font-weight: 900; }
+        textarea { width: 96%; height: 220px; background: #000; color: #00FF41; border: 1px solid #00FF41; padding: 12px; font-size: 16px; margin-bottom: 20px; outline: none; resize: none; overflow-y: scroll; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        button, label { flex: 1; min-width: 130px; padding: 15px; background: #000; color: #00FF41; border: 1px solid #00FF41; cursor: pointer; font-weight: bold; text-align: center; display: inline-block; }
+        button:hover, label:hover { background: #00FF41; color: #000; }
+        .file-btn { color: #f0f; border-color: #f0f; }
+        .file-btn:hover { background: #f0f; color: #000; }
+        .copy { color: #00bfff; border-color: #00bfff; }
+        .reset { color: #ff0000; border-color: #ff0000; }
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="app-card">
+    <h1>BT</h1>
+    <textarea id="ioBox" placeholder="INPUT DATA OR UPLOAD FILE..."></textarea>
+    <div class="btn-group">
+        <button onclick="toBin()">TO BINARY</button>
+        <button onclick="toTxt()">TO TEXT</button>
+        
+        <label class="file-btn">
+            UPLOAD FILE
+            <input type="file" id="fileIn" onchange="readBin(this)">
+        </label>
+
+        <button onclick="copyIt()" class="copy">COPY</button>
+        <button onclick="res()" class="reset">RESET</button>
+    </div>
+</div>
+
+<script>
+    const box = document.getElementById('ioBox');
+
+    function toBin() {
+        box.value = box.value.split('').map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
+    }
+
+    function toTxt() {
+        let b = box.value.replace(/[^01]/g, '');
+        let t = "";
+        for (let i = 0; i < b.length; i += 8) {
+            let chunk = b.substring(i, i + 8);
+            if (chunk.length === 8) t += String.fromCharCode(parseInt(chunk, 2));
+        }
+        box.value = t;
+    }
+
+    function readBin(input) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function() {
+            const arrayBuffer = reader.result;
+            const bytes = new Uint8Array(arrayBuffer);
+            // Convert first 1000 bytes (to prevent crashing browser on huge files)
+            const binaryString = Array.from(bytes.slice(0, 1000))
+                .map(byte => byte.toString(2).padStart(8, '0'))
+                .join(' ');
+            box.value = binaryString + (bytes.length > 1000 ? "\n\n[FILE TOO LARGE: SHOWING FIRST 1000 BYTES]" : "");
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function copyIt() {
+        navigator.clipboard.writeText(box.value);
+        let el = event.target;
+        let old = el.innerText;
+        el.innerText = "COPIED!";
+        setTimeout(() => { el.innerText = old; }, 1000);
+    }
+
+    function res() { box.value = ''; document.getElementById('fileIn').value = ''; }
+</script>
+
+</body>
+</html>
